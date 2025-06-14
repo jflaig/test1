@@ -1,14 +1,24 @@
 const form = document.getElementById('item-form');
 const nameInput = document.getElementById('name');
 const quantityInput = document.getElementById('quantity');
+const categoryInput = document.getElementById('category');
 const itemList = document.getElementById('item-list');
 const clearAllBtn = document.getElementById('clear-all');
+const exportBtn = document.getElementById('export-list');
 
 let items = [];
 
 function loadItems() {
     const data = localStorage.getItem('shoppingList');
-    items = data ? JSON.parse(data) : [];
+    if (data) {
+        items = JSON.parse(data);
+    } else {
+        items = [
+            { id: '1', name: 'Leche', quantity: '2 litros', category: 'Lácteos', purchased: false },
+            { id: '2', name: 'Pan', quantity: '1 barra', category: 'Panadería', purchased: false },
+            { id: '3', name: 'Manzanas', quantity: '6 unidades', category: 'Frutas', purchased: false }
+        ];
+    }
 }
 
 function saveItems() {
@@ -27,7 +37,7 @@ function createItemElement(item) {
     checkbox.addEventListener('change', () => togglePurchased(item.id));
 
     const label = document.createElement('label');
-    label.textContent = `${item.name} - ${item.quantity}`;
+    label.textContent = `${item.name} (${item.category}) - ${item.quantity}`;
 
     const editBtn = document.createElement('button');
     editBtn.textContent = 'Editar';
@@ -59,12 +69,14 @@ function addItem(e) {
     e.preventDefault();
     const name = nameInput.value.trim();
     const quantity = quantityInput.value.trim();
-    if (!name || !quantity) return;
+    const category = categoryInput.value.trim();
+    if (!name || !quantity || !category) return;
 
     const item = {
         id: Date.now().toString(),
         name,
         quantity,
+        category,
         purchased: false
     };
     items.push(item);
@@ -103,6 +115,10 @@ function editItem(id) {
     if (newQty !== null && newQty.trim() !== '') {
         item.quantity = newQty.trim();
     }
+    const newCategory = prompt('Categoría', item.category);
+    if (newCategory !== null && newCategory.trim() !== '') {
+        item.category = newCategory.trim();
+    }
     saveItems();
     renderItems();
 }
@@ -113,8 +129,20 @@ function clearAll() {
     renderItems();
 }
 
+function exportList() {
+    const data = JSON.stringify(items, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'lista_compra.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
 form.addEventListener('submit', addItem);
 clearAllBtn.addEventListener('click', clearAll);
+exportBtn.addEventListener('click', exportList);
 
 loadItems();
 renderItems();
